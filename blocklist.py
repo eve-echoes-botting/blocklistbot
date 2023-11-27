@@ -1,6 +1,7 @@
 from discord.ext import commands, tasks
 from datetime import datetime
 from pd import pd
+import os
 
 
 keys = ['initial pilot name',
@@ -30,6 +31,10 @@ class blocklist_cog(commands.Cog):
             return
         msg = message.content[len(mention):].split('\n')
         c = message.channel
+        if msg[0].replace(' ', '') == 'blocklist':
+            with open(os.path.dirname(os.path.realpath(__file__)) + '/' + 'Readme.md', 'r') as f:
+                await c.send(f.read())
+                return
         if not msg[0].startswith('blocklist '):
             return
         msg[0] = msg[0][len('blocklist '):]
