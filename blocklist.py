@@ -11,9 +11,9 @@ keys = ['initial pilot name',
     'corp/alliance of pilot adding them'
 ]
 
-def setup(bot):
+async def setup(bot):
     l = blocklist_cog(bot)
-    bot.add_cog(l)
+    await bot.add_cog(l)
 
 class blocklist_cog(commands.Cog):
     def __init__(self, bot):
@@ -34,20 +34,21 @@ class blocklist_cog(commands.Cog):
             return
         msg[0] = msg[0][len('blocklist '):]
         if msg[0] == 'show':
-            m = 'blocklist:\n' + '\n'.join(self.d.keys())
+            m = 'blocklist:\n' + '\n'.join([f'`{v["initial pilot name"]}` also known as `{v["known aliases"]}` for `{v["reason for being added"]}`' for k, v in self.d.items()])
         elif msg[0].startswith('search '):
-            m = f'searching through blacklist for {key}\n'
-            k = None
+            k = []
             key = msg[0][len('search '):]
+            m = f'searching through blocklist for {key}\n'
             if key in self.d:
-                k = key
+                k.append(key)
             else:
                 for i in self.d:
-                    if key in self.d[i]['initial pilot name'] or self.d[i]['known aliases']:
-                        k = i
-                        break
+                    print(key, self.d[i]['initial pilot name'], self.d[i]['known aliases'])
+                    if key in self.d[i]['initial pilot name'] or key in self.d[i]['known aliases']:
+                        k.append(i)
             if k:
-                m += '\n'.join([f'{k}: {v}' for k, v in self.d[k].items()])
+                for i in k:
+                    m += '\n'.join([f'{ka}: {v}' for ka, v in self.d[i].items()]) + '\n\n'
             else:
                 m += 'not found'
         elif msg[0].startswith('add'):
@@ -73,10 +74,10 @@ class blocklist_cog(commands.Cog):
                     m = 'tag number already blacklisted'
                 else:
                     self.d[k] = d
-                    self.d.sync()
-                    d['date of addition'] = datetime.now().strftime('%Y-%M-%d')
+                    d['date of addition'] = datetime.now().strftime('%Y-%m-%d')
                     a = message.author
                     d['who added'] = f'{str(a)} aka {a.display_name} id {a.id}'
+                    self.d.sync()
                     m = 'adding this to blacklist:\n```\n'
                     m += '\n'.join([f'{k}: {v}' for k, v in d.items()]) + '```'
         else:
