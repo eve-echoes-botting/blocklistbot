@@ -26,15 +26,25 @@ class blocklist_cog(commands.Cog):
     async def on_message(self, message):
         if message.author.bot:
             return
-        mention = f'<@{self.bot.user.id}> '
-        if not message.content.startswith(mention):
-            return
-        msg = message.content[len(mention):].split('\n')
         c = message.channel
-        if msg[0].replace(' ', '') == 'blocklist':
+        verbose = c.id == 1151028471628312586
+        found = False
+        txt = message.content
+        ar = [f'<@{self.bot.user.id}> ', f'<@{139179662369751041}>']
+        for mention in ar:
+            if message.content.startswith(mention):
+                msg = message.content[len(mention):]
+                found = True
+                break
+        if verbose:
+            await c.send(f'{found} `{txt} {ar}`')
+        if not found:
+            return
+        if msg.replace(' ', '') == 'blocklist':
             with open(os.path.dirname(os.path.realpath(__file__)) + '/' + 'Readme.md', 'r') as f:
                 await c.send(f.read())
                 return
+        msg = msg.split('\n')
         if not msg[0].startswith('blocklist '):
             return
         msg[0] = msg[0][len('blocklist '):]
