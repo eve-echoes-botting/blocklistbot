@@ -4,13 +4,13 @@ from pd import pd
 import os
 
 
-keys = ['initial pilot name',
-    'known aliases',
-    'pilot tag number',
-    'known corps/ alliances',
-    'reason for being added',
-    'corp/alliance of pilot adding them'
+keys = ['pilot name',
+    'pilot id',
+    'reason',
 ]
+dkey = 'pilot id'
+jistkey = 'pilot name'
+searchkey = 'pilot name'
 
 async def setup(bot):
     l = blocklist_cog(bot)
@@ -37,7 +37,7 @@ class blocklist_cog(commands.Cog):
                 found = True
                 break
         if verbose:
-            await c.send(f'{found} `{txt} {ar}`')
+            await c.send(f'{found} `mention check: {txt} {ar}`')
         if not found:
             return
         if msg.replace(' ', '') == 'blocklist':
@@ -49,7 +49,7 @@ class blocklist_cog(commands.Cog):
             return
         msg[0] = msg[0][len('blocklist '):]
         if msg[0] == 'show':
-            m = 'blocklist:\n' + '\n'.join([f'`{v["initial pilot name"]}` also known as `{v["known aliases"]}` for `{v["reason for being added"]}`' for k, v in self.d.items()])
+            m = 'blocklist:\n' + '\n'.join([f'`{v[jistkey]}``' for k, v in self.d.items()])
         elif msg[0].startswith('search '):
             k = []
             key = msg[0][len('search '):]
@@ -58,8 +58,7 @@ class blocklist_cog(commands.Cog):
                 k.append(key)
             else:
                 for i in self.d:
-                    print(key, self.d[i]['initial pilot name'], self.d[i]['known aliases'])
-                    if key in self.d[i]['initial pilot name'] or key in self.d[i]['known aliases']:
+                    if key in self.d[i][searchkey]:
                         k.append(i)
             if k:
                 for i in k:
@@ -80,18 +79,18 @@ class blocklist_cog(commands.Cog):
                 if i not in d:
                     missing.append(i)
             if len(missing) > 0:
-                m = f'please, provide info in the following format:\n'
+                m = f'please, provide info in the following format. yes, exactly this format:\n'
                 m += '```\n' + '\n'.join([x + ': <text>' for x in keys]) + '```'
                 m += f'missing keys: {missing}\n'
             else:
-                k = d['pilot tag number']
+                k = d[dkey]
                 if k in self.d:
                     m = 'tag number already blacklisted'
                 else:
                     self.d[k] = d
-                    d['date of addition'] = datetime.now().strftime('%Y-%m-%d')
+                    d['date added'] = datetime.now().strftime('%Y-%m-%d')
                     a = message.author
-                    d['who added'] = f'{str(a)} aka {a.display_name} id {a.id}'
+                    d['added by discord member'] = f'{str(a.name)} aka {a.display_name} id {a.id}'
                     self.d.sync()
                     m = 'adding this to blacklist:\n```\n'
                     m += '\n'.join([f'{k}: {v}' for k, v in d.items()]) + '```'
