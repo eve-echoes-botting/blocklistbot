@@ -58,7 +58,7 @@ class blocklist_cog(commands.Cog):
                 k.append(key)
             else:
                 for i in self.d:
-                    if key in self.d[i][searchkey]:
+                    if key == self.d[i][searchkey]:
                         k.append(i)
             if k:
                 for i in k:
