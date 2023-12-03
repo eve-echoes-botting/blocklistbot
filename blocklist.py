@@ -13,6 +13,9 @@ dkey = 'pilot id'
 jistkey = 'pilot name'
 searchkey = 'pilot name'
 
+full_access_role_id = 1121764876495376405
+yes_no_access_role_id = 1145953261757677598
+
 async def setup(bot):
     l = blocklist_cog(bot)
     await bot.add_cog(l)
@@ -28,6 +31,18 @@ class blocklist_cog(commands.Cog):
         if message.author.bot:
             return
         c = message.channel
+        u = message.author
+        access = None
+        if u.id == 139179662369751041:
+            assess = 'full'
+        for i in u.roles:
+            if i.id == full_access_role_id:
+                access = 'full'
+                break
+            if i.id == yes_no_access_role_id:
+                access = 'yesno'
+        if not access:
+            return
         verbose = c.id == 1151028471628312586
         found = False
         txt = message.content
@@ -52,6 +67,7 @@ class blocklist_cog(commands.Cog):
         if msg[0] == 'show':
             m = 'blocklist:\n' + '\n'.join([f'`{v[jistkey]}``' for k, v in self.d.items()])
         elif msg[0].startswith('search '):
+            found = False
             k = []
             key = msg[0][len('search '):]
             m = f'searching through blocklist for {key}\n'
@@ -62,6 +78,7 @@ class blocklist_cog(commands.Cog):
                     if key == self.d[i][searchkey]:
                         k.append(i)
             if k:
+                found = True
                 for i in k:
                     m += '\n'.join([f'{ka}: {v}' for ka, v in self.d[i].items()]) + '\n\n'
             else:
@@ -108,5 +125,11 @@ class blocklist_cog(commands.Cog):
                         loops += 1
         else:
             m = f'invalid command string: {msg[0]}'
-        await self.bot.send(c, m)
+        if access == 'full':
+            await self.bot.send(c, m)
+        elif access == 'yesno':
+            if found:
+                await c.send('yes')
+            else:
+                await c.send('no')
 
