@@ -1,4 +1,5 @@
 from discord.ext import commands, tasks
+from discord.utils import get
 from datetime import datetime
 from pd import pd
 import os
@@ -66,34 +67,45 @@ class blocklist_cog(commands.Cog):
             else:
                 m += 'not found'
         elif msg[0].startswith('add'):
+            m = ''
             msg = msg[1:]
-            d = {}
-            missing = []
-            for i in keys:
-                for j in msg:
-                    if j.startswith(i + ':'):
-                        t = j[len(i + ':'):]
-                        if t[0] == ' ':
-                            t = t[1:]
-                        d[i] = t
-                if i not in d:
-                    missing.append(i)
-            if len(missing) > 0:
-                m = f'please, provide info in the following format. yes, exactly this format:\n'
-                m += '```\n' + '\n'.join([x + ': <text>' for x in keys]) + '```'
-                m += f'missing keys: {missing}\n'
-            else:
-                k = d[dkey]
-                if k in self.d:
-                    m = 'tag number already blacklisted'
+            loops = 0
+            while msg and loops < 1000:
+                d = {}
+                missing = []
+                fields = msg[:len(keys)]
+                print(fields)
+                msg = msg[len(keys):]
+                for i in keys:
+                    for j in fields:
+                        if j.startswith(i + ':'):
+                            t = j[len(i + ':'):]
+                            if t[0] == ' ':
+                                t = t[1:]
+                            d[i] = t
+                    if i not in d:
+                        missing.append(i)
+                if len(missing) > 0:
+                    m += f'please, provide info in the following format. yes, exactly this format:\n'
+                    m += '```\n' + '\n'.join([x + ': <text>' for x in keys]) + '```'
+                    m += f'missing keys: {missing}\n'
                 else:
-                    self.d[k] = d
-                    d['date added'] = datetime.now().strftime('%Y-%m-%d')
-                    a = message.author
-                    d['added by discord member'] = f'{str(a.name)} aka {a.display_name} id {a.id}'
-                    self.d.sync()
-                    m = 'adding this to blacklist:\n```\n'
-                    m += '\n'.join([f'{k}: {v}' for k, v in d.items()]) + '```'
+                    k = d[dkey]
+                    if k in self.d:
+                        m += f'tag number already blacklisted: {k}\n'
+                    else:
+                        self.d[k] = d
+                        d['date added'] = datetime.now().strftime('%Y-%m-%d')
+                        a = message.author
+                        d['added by discord member'] = f'{str(a.name)} aka {a.display_name} id {a.id}'
+                        self.d.sync()
+                        m += 'adding this to blacklist:\n```\n'
+                        m += '\n'.join([f'{k}: {v}' for k, v in d.items()]) + '```\n'
+                if msg:
+                    loops += 1
+                    while not msg[0].startswith(keys[0]) and loops < 1000:
+                        msg = msg[1:]
+                        loops += 1
         else:
             m = f'invalid command string: {msg[0]}'
         await self.bot.send(c, m)
